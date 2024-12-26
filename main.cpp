@@ -6,6 +6,8 @@
 #include <highlevelmonitorconfigurationapi.h>
 #include <physicalmonitorenumerationapi.h>
 #include <dxva2api.h>
+#include <string.h>
+#include <stdlib.h>
 //#pragma comment(lib, "Dxva2.lib")
 
 
@@ -21,7 +23,8 @@ class MonOptions {
         MonOptions(HWND hWnd) {
             hMonitor = MonitorFromWindow(hWnd, MONITOR_DEFAULTTOPRIMARY); // windows.h
             GetPhysicalMonitorsFromHMONITOR(hMonitor, 1, phm);
-            std::cout << "\nUse monitor";
+            GetBrightness();
+            //std::cout << "\nUse monitor";
         }
 
         int GetBrightness() {
@@ -31,31 +34,60 @@ class MonOptions {
             return 10; // GetBrightness error
         }
 
-        ~MonOptions() {
-            delete[] hMonitor;
-            std::cout << "\nОбъект уничтожен" << std::endl;
+        int SetBrightness(DWORD bright_level) {
+            GetBrightness();
+            if (bright_level >= MinBrightness && bright_level <= MaxBrightness) {
+                if(SetMonitorBrightness(phm[0].hPhysicalMonitor, bright_level)) {
+                    return 0;
+                }
+            }
+            return 20; // SetBrightness error
         }
+
+        // ~MonOptions() {
+        //     delete[] hMonitor;
+        //     std::cout << "\nОбъект уничтожен" << std::endl;
+        // }
 };
 
 
-int main () {
+int main (int argc, char* argv[]) {
+    int argCount;
+    LPWSTR* argvArray;
+    argvArray = CommandLineToArgvW(GetCommandLineW(), &argCount);
+
+    // for (int i = 1; i < argCount; i++) {
+    //     std::wcout << "\n" << argvArray[i];
+    // }
+
     HWND hWnd = GetConsoleWindow(); //winuser.h
-    MonOptions MonOptinons_1(hWnd);
-    if (MonOptinons_1.hMonitor)
+    MonOptions MonOptions_1(hWnd);
+    if (MonOptions_1.hMonitor)
     {
-        if (MonOptinons_1.phm)
-        {
-            if (MonOptinons_1.GetBrightness())
-            {
-                std::cout << "test_2" << " min:" << MonOptinons_1.MinBrightness << " cur:" << MonOptinons_1.CurrentBrightness << " max:" << MonOptinons_1.MaxBrightness;
-                //SetMonitorBrightness(phm[0].hPhysicalMonitor, 30);
-                //GetMonitorBrightness(phm[0].hPhysicalMonitor, &MinBrightness, &CurrentBrightness, &MaxBrightness);
-                //std::cout << "test_2" << " min:" << MinBrightness << " cur:" << CurrentBrightness << " max:" << MaxBrightness;
+        for (int i = 1; i < argCount; i++) {
+            if (wcscmp(argvArray[i], L"--info") == 0) {
+                MonOptions_1.GetBrightness();
+                std::cout << "\nBrightness: " 
+                    << MonOptions_1.CurrentBrightness 
+                    << " (" << MonOptions_1.MinBrightness 
+                    << "-" << MonOptions_1.MaxBrightness << ")";
+            }
+            if (wcscmp(argvArray[i], L"--set-bright") == 0) {
+                //LPWSTR value = argvArray[i + 1];
+                DWORD znach = _wtoi(argvArray[i + 1]);
+                if(MonOptions_1.SetBrightness(znach) != 0)
+                {
+                    std::cout << "error 20" << std ::endl;
+                    return 20;
+                }
+                //std::cout << "\n\n" << typeid(znach).name() << "  " << znach << std::endl;
             }
         }
+        //}
     } else {
         std::cout << "monitor not found";
     }
-    system("pause");
+    LocalFree(argvArray);
+    //system("pause");
     return 0;
 }

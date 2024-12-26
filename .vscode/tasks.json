@@ -33,11 +33,11 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-Wall",
-                "-ldxva2",
                 "-g",
                 "${file}",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",
+                "-ldxva2"
             ],
             "options": {
                 "cwd": "C:\\Users\\risa\\Programs\\msys2\\ucrt64\\bin"
